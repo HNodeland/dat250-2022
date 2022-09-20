@@ -4,7 +4,7 @@ from flask_bootstrap import Bootstrap
 #from flask_login import LoginManager
 import sqlite3
 import os
-
+#this is a test comment for discord bot
 # create and configure app
 app = Flask(__name__)
 Bootstrap(app)
