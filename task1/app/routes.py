@@ -1,6 +1,6 @@
 from flask import render_template, flash, redirect, url_for, request
 from app import app, query_db
-from app.forms import IndexForm, PostForm, FriendsForm, ProfileForm, CommentsForm
+from app.forms import LoginForm, RegisterForm, PostForm, FriendsForm, ProfileForm, CommentsForm
 from datetime import datetime
 import os
 
@@ -10,21 +10,22 @@ import os
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/index', methods=['GET', 'POST'])
 def index():
-    form = IndexForm()
-    if form.login.is_submitted() and form.login.submit.data:
-        user = query_db("""SELECT * FROM Users WHERE username="{}";""".format(form.login.username.data), one=True)
+    loginform = LoginForm()
+    registerform = RegisterForm()
+    if loginform.is_submitted() and loginform.submit.data:
+        user = query_db("""SELECT * FROM Users WHERE username="{}";""".format(loginform.username.data), one=True)
         if user == None:
             flash('Sorry, wrong password or username!')
-        elif user['password'] == form.login.password.data:
-            return redirect(url_for('stream', username=form.login.username.data))
+        elif user['password'] == loginform.password.data:
+            return redirect(url_for('stream', username=loginform.username.data))
         else:
             flash('Sorry, wrong password or username!')
 
-    elif form.register.is_submitted() and form.register.submit.data:
-        query_db('INSERT INTO Users (username, first_name, last_name, password) VALUES("{}", "{}", "{}", "{}");'.format(form.register.username.data, form.register.first_name.data,
-         form.register.last_name.data, form.register.password.data))
+    if registerform.validate_on_submit():
+        query_db('INSERT INTO Users (username, first_name, last_name, password) VALUES("{}", "{}", "{}", "{}");'.format(registerform.username.data, registerform.first_name.data,
+         registerform.last_name.data, registerform.password.data))
         return redirect(url_for('index'))
-    return render_template('index.html', title='Welcome', form=form)
+    return render_template('index.html', title='Welcome', loginform=loginform , registerform=registerform)
 
 
 # content stream page
