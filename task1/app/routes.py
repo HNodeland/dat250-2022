@@ -11,9 +11,8 @@ import os
 @app.route('/index', methods=['GET', 'POST'])
 def index():
     form = IndexForm()
-
     if form.login.is_submitted() and form.login.submit.data:
-        user = query_db('SELECT * FROM Users WHERE username="{}";'.format(form.login.username.data), one=True)
+        user = query_db("""SELECT * FROM Users WHERE username="{}";""".format(form.login.username.data), one=True)
         if user == None:
             flash('Sorry, wrong password or username!')
         elif user['password'] == form.login.password.data:
