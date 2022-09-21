@@ -1,8 +1,9 @@
 from flask import render_template, flash, redirect, url_for, abort
-from app import app, query_db
+from app import app, query_db, verify_login
 from app.forms import LoginForm, RegisterForm, PostForm, FriendsForm, ProfileForm, CommentsForm
 from datetime import datetime
 import os
+import sys
 
 # this file contains all the different routes, and the logic for communicating with the database
 
@@ -13,13 +14,23 @@ def index():
     loginform = LoginForm()
     registerform = RegisterForm()
     if loginform.is_submitted() and loginform.submit.data:
-        user = query_db("""SELECT * FROM Users WHERE username="{}";""".format(loginform.username.data), one=True)
-        if user == None:
-            flash('Sorry, wrong password or username!')
-        elif user['password'] == loginform.password.data:
-            return redirect(url_for('stream', username=loginform.username.data))
+        #Henter ut brukernavn og passord fra formen
+        username = loginform.username.data
+        
+        #burde kanskje skje noe kryptering rundt denne
+        password = loginform.password.data
+        
+        #Valid_user returnerer en tuple, der index 1 representerer
+        #om valideringen ble godkjent eller ikke
+        #valid_user[1] = True => Godkjent
+        #valid_user[1] = False => Ikke godkjent
+        #For å hente ut et dictionary med brukernavn og passord:
+        #valid_user[0] => {'username': 'test', 'password': 'test'}
+        valid_user = verify_login(username, password)
+        if valid_user[1] == 1:
+            return redirect(url_for('stream', username=username))
         else:
-            flash('Sorry, wrong password or username!')
+            flash('Sorry, wrong username or password!')
 
     if registerform.validate_on_submit():
         query_db('INSERT INTO Users (username, first_name, last_name, password) VALUES("{}", "{}", "{}", "{}");'.format(registerform.username.data, registerform.first_name.data,
@@ -113,3 +124,4 @@ def notfound(e):
 @app.errorhandler(500)
 def server_fault(e):
     return render_template('500_error.html')
+

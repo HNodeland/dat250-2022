@@ -1,9 +1,13 @@
+from logging import error
 from flask import Flask, g
 from config import Config
 from flask_bootstrap import Bootstrap
 #from flask_login import LoginManager
 import sqlite3
 import os
+from sqlite3 import Error
+import sys
+
 #this is a test comment for discord bot
 # create and configure app
 app = Flask(__name__)
@@ -39,6 +43,31 @@ def query_db(query, one=False):
     return (rv[0] if rv else None) if one else rv
 
 # TODO: Add more specific queries to simplify code
+
+#TEMP TEST QUERY AV HÅKON, IKKE RØR
+def verify_login(username, password):
+    try:
+        sql = "SELECT * FROM Users WHERE username = :username AND password = :password"
+        db = get_db()
+        cursor = db.execute(sql, {'username': username, 'password': password})
+        valid_user = []
+        for Users in cursor:
+            valid_user.append({
+                "username": username, 
+                "password": password
+                })
+
+        if len(valid_user) == 0:
+            return (0, False)
+        return (valid_user[0], True)
+    except Error as e:
+        print(e)
+
+def register_account(first_name, last_name, username, password):
+    try:
+        sql ="INSERT INTO Users username = :username "
+    except Error as e:
+        print(e)
 
 # automatically called when application is closed, and closes db connection
 @app.teardown_appcontext
