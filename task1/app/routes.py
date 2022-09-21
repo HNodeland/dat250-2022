@@ -1,8 +1,9 @@
 from flask import render_template, flash, redirect, url_for, request
-from app import app, query_db
+from app import app, query_db, verify_login
 from app.forms import IndexForm, PostForm, FriendsForm, ProfileForm, CommentsForm
 from datetime import datetime
 import os
+import sys
 
 # this file contains all the different routes, and the logic for communicating with the database
 
@@ -12,13 +13,23 @@ import os
 def index():
     form = IndexForm()
     if form.login.is_submitted() and form.login.submit.data:
-        user = query_db("""SELECT * FROM Users WHERE username="{}";""".format(form.login.username.data), one=True)
-        if user == None:
-            flash('Sorry, wrong password or username!')
-        elif user['password'] == form.login.password.data:
-            return redirect(url_for('stream', username=form.login.username.data))
+        #Henter ut brukernavn og passord fra formen
+        username = form.login.username.data
+        
+        #burde kanskje skje noe kryptering rundt denne
+        password = form.login.password.data
+        
+        #Valid_user returnerer en tuple, der index 1 representerer
+        #om valideringen ble godkjent eller ikke
+        #valid_user[1] = True => Godkjent
+        #valid_user[1] = False => Ikke godkjent
+        #For å hente ut et dictionary med brukernavn og passord:
+        #valid_user[0] => {'username': 'test', 'password': 'test'}
+        valid_user = verify_login(username, password)
+        if valid_user[1] == 1:
+            return redirect(url_for('stream', username=username))
         else:
-            flash('Sorry, wrong password or username!')
+            flash('Sorry, wrong username or password!')
 
     elif form.register.is_submitted() and form.register.submit.data:
         query_db('INSERT INTO Users (username, first_name, last_name, password) VALUES("{}", "{}", "{}", "{}");'.format(form.register.username.data, form.register.first_name.data,
@@ -83,3 +94,7 @@ def profile(username):
     
     user = query_db('SELECT * FROM Users WHERE username="{}";'.format(username), one=True)
     return render_template('profile.html', title='profile', username=username, user=user, form=form)
+
+@app.errorhandler(404)
+def notfound(e):
+    return render_template('error.html')
