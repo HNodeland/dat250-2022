@@ -1,4 +1,4 @@
-from flask import render_template, flash, redirect, url_for, request
+from flask import render_template, flash, redirect, url_for, abort
 from app import app, query_db
 from app.forms import LoginForm, RegisterForm, PostForm, FriendsForm, ProfileForm, CommentsForm
 from datetime import datetime
@@ -40,10 +40,17 @@ def stream(username):
 
 
         query_db('INSERT INTO Posts (u_id, content, image, creation_time) VALUES({}, "{}", "{}", \'{}\');'.format(user['id'], form.content.data, form.image.data.filename, datetime.now()))
-        return redirect(url_for('stream', username=username))
+        try:
+            return redirect(url_for('stream', username=username))
+        except:
+            abort(404)
 
     posts = query_db('SELECT p.*, u.*, (SELECT COUNT(*) FROM Comments WHERE p_id=p.id) AS cc FROM Posts AS p JOIN Users AS u ON u.id=p.u_id WHERE p.u_id IN (SELECT u_id FROM Friends WHERE f_id={0}) OR p.u_id IN (SELECT f_id FROM Friends WHERE u_id={0}) OR p.u_id={0} ORDER BY p.creation_time DESC;'.format(user['id']))
-    return render_template('stream.html', title='Stream', username=username, form=form, posts=posts)
+    try:
+        return render_template('stream.html', title='Stream', username=username, form=form, posts=posts)
+    except:
+        abort(404)
+
 
 # comment page for a given post and user.
 @app.route('/comments/<username>/<int:p_id>', methods=['GET', 'POST'])
@@ -55,7 +62,10 @@ def comments(username, p_id):
 
     post = query_db('SELECT * FROM Posts WHERE id={};'.format(p_id), one=True)
     all_comments = query_db('SELECT DISTINCT * FROM Comments AS c JOIN Users AS u ON c.u_id=u.id WHERE c.p_id={} ORDER BY c.creation_time DESC;'.format(p_id))
-    return render_template('comments.html', title='Comments', username=username, form=form, post=post, comments=all_comments)
+    try:
+        return render_template('comments.html', title='Comments', username=username, form=form, post=post, comments=all_comments)
+    except:
+        abort(403)
 
 # page for seeing and adding friends
 @app.route('/friends/<username>', methods=['GET', 'POST'])
@@ -70,7 +80,10 @@ def friends(username):
             query_db('INSERT INTO Friends (u_id, f_id) VALUES({}, {});'.format(user['id'], friend['id']))
     
     all_friends = query_db('SELECT * FROM Friends AS f JOIN Users as u ON f.f_id=u.id WHERE f.u_id={} AND f.f_id!={} ;'.format(user['id'], user['id']))
-    return render_template('friends.html', title='Friends', username=username, friends=all_friends, form=form)
+    try:
+        return render_template('friends.html', title='Friends', username=username, friends=all_friends, form=form)
+    except:
+        abort(403)
 
 # see and edit detailed profile information of a user
 @app.route('/profile/<username>', methods=['GET', 'POST'])
@@ -83,4 +96,20 @@ def profile(username):
         return redirect(url_for('profile', username=username))
     
     user = query_db('SELECT * FROM Users WHERE username="{}";'.format(username), one=True)
-    return render_template('profile.html', title='profile', username=username, user=user, form=form)
+    try:
+        return render_template('profile.html', title='profile', username=username, user=user, form=form)
+    except:
+        abort(403)
+
+@app.errorhandler(403)
+def forbidden(e):
+    return render_template('403_error.html')
+
+@app.errorhandler(404)
+def notfound(e):
+    print(e)
+    return render_template('404_error.html')    
+
+@app.errorhandler(500)
+def server_fault(e):
+    return render_template('500_error.html')
