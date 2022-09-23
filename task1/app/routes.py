@@ -13,7 +13,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 @app.route('/index', methods=['GET', 'POST'])
 def index():
     form = IndexForm()
-    if form.login.is_submitted() and form.login.submit.data:
+    if form.login.validate_on_submit():
         print("logging in -- ", file=sys.stderr)
         
         # Bruker user fra databasen til å hente ut hasha passord -> passord-input og hasha passord blir sammenliknet

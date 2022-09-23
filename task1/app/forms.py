@@ -10,8 +10,8 @@ from flask_wtf.file import FileAllowed, FileRequired
 # TODO: There was some important security feature that wtforms provides, but I don't remember what; implement it
 
 class LoginForm(FlaskForm):
-    username = StringField('Username', render_kw={'placeholder': 'Username'}, validators=[InputRequired()])
-    password = PasswordField('Password', render_kw={'placeholder': 'Password'}, validators=[InputRequired()])
+    username = StringField('Username', render_kw={'placeholder': 'Username'}, validators=[InputRequired(), Regexp('^\w+$'), Length(min=2, max=50)])
+    password = PasswordField('Password', render_kw={'placeholder': 'Password'}, validators=[InputRequired(), Regexp('^\w+$'), Length(min=2, max=50)])
     remember_me = BooleanField('Remember me') # TODO: It would be nice to have this feature implemented, probably by using cookies
     submit = SubmitField('Sign In')
 
