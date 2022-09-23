@@ -77,7 +77,10 @@ def comments(username, p_id):
 
     post = query_db('SELECT * FROM Posts WHERE id={};'.format(p_id), one=True)
     all_comments = query_db('SELECT DISTINCT * FROM Comments AS c JOIN Users AS u ON c.u_id=u.id WHERE c.p_id={} ORDER BY c.creation_time DESC;'.format(p_id))
-    return render_template('comments.html', title='Comments', username=username, form=form, post=post, comments=all_comments)
+    try:
+        return render_template('comments.html', title='Comments', username=username, form=form, post=post, comments=all_comments)
+    except:
+        abort(403)
 
 # page for seeing and adding friends
 @app.route('/friends/<username>', methods=['GET', 'POST'])
@@ -92,7 +95,10 @@ def friends(username):
             query_db('INSERT INTO Friends (u_id, f_id) VALUES({}, {});'.format(user['id'], friend['id']))
     
     all_friends = query_db('SELECT * FROM Friends AS f JOIN Users as u ON f.f_id=u.id WHERE f.u_id={} AND f.f_id!={} ;'.format(user['id'], user['id']))
-    return render_template('friends.html', title='Friends', username=username, friends=all_friends, form=form)
+    try:
+        return render_template('friends.html', title='Friends', username=username, friends=all_friends, form=form)
+    except:
+        abort(403)
 
 # see and edit detailed profile information of a user
 @app.route('/profile/<username>', methods=['GET', 'POST'])
@@ -105,8 +111,21 @@ def profile(username):
         return redirect(url_for('profile', username=username))
     
     user = query_db('SELECT * FROM Users WHERE username="{}";'.format(username), one=True)
-    return render_template('profile.html', title='profile', username=username, user=user, form=form)
+    try:
+        return render_template('profile.html', title='profile', username=username, user=user, form=form)
+    except:
+        abort(403)
+
+@app.errorhandler(403)
+def forbidden(e):
+    return render_template('403_error.html')
 
 @app.errorhandler(404)
 def notfound(e):
-    return render_template('error.html')
+    print(e)
+    return render_template('404_error.html')    
+
+@app.errorhandler(500)
+def server_fault(e):
+    return render_template('500_error.html')
+
