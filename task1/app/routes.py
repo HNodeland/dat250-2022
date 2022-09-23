@@ -42,6 +42,7 @@ def index():
        
         if password == confirm_password:
             register_account(new_username, first_name, last_name, password)
+            flash('Hello ' + new_username + ', your account has succesfully been created!')
         else:
             flash('You have different passwords!')
         
