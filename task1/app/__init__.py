@@ -63,9 +63,12 @@ def verify_login(username, password):
     except Error as e:
         print(e)
 
-def register_account(first_name, last_name, username, password):
+def register_account(username, first_name, last_name, password):
     try:
-        sql ="INSERT INTO Users username = :username "
+        sql ="INSERT INTO User(username, first_name, last_name, password) VALUES (?,?,?,?)"
+        db = get_db()
+        db.execute(sql, (username, first_name, last_name, password))
+        db.commit()
     except Error as e:
         print(e)
 

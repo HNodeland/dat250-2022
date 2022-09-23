@@ -32,7 +32,7 @@
                 </div>
                 <div class="card-body">
                     <h5 class="card-title">Create a new profile</h5>
-                    <form action="{{ url_for('index') }}", method="POST">
+                    <form action="", method="POST">
                         {{ wtf.form_field(registerform.first_name) }}
                         {{ wtf.form_field(registerform.last_name) }}
                         {{ wtf.form_field(registerform.username) }}

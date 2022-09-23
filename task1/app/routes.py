@@ -1,5 +1,5 @@
 from flask import render_template, flash, redirect, url_for, request
-from app import app, query_db, verify_login
+from app import app, query_db, verify_login, register_account
 from app.forms import LoginForm, RegisterForm, PostForm, FriendsForm, ProfileForm, CommentsForm
 from datetime import datetime
 import os
@@ -19,7 +19,7 @@ def index():
         
         #burde kanskje skje noe kryptering rundt denne
         password = loginform.password.data
-        
+
         #Valid_user returnerer en tuple, der index 1 representerer
         #om valideringen ble godkjent eller ikke
         #valid_user[1] = True => Godkjent
@@ -32,15 +32,25 @@ def index():
         else:
             flash('Sorry, wrong username or password!')
 
-    if registerform.validate_on_submit():
-        query_db('INSERT INTO Users (username, first_name, last_name, password) VALUES("{}", "{}", "{}", "{}");'.format(registerform.username.data, registerform.first_name.data,
-         registerform.last_name.data, registerform.password.data))
+    elif registerform.is_submitted() and registerform.submit.data:
+        new_username = registerform.username.data
+        first_name = registerform.first_name.data
+        last_name = registerform.last_name.data
+        password = registerform.password.data
+        confirm_password = registerform.confirm_password
+
+        if password == confirm_password:
+            register_account(new_username, first_name, last_name, password)
+        else:
+            flash('You have different passwords!')
+        
+        #query_db('INSERT INTO Users (username, first_name, last_name, password) VALUES("{}", "{}", "{}", "{}");'.format(registerform.username.data, registerform.first_name.data,
+         #registerform.last_name.data, registerform.password.data))
+
         return redirect(url_for('index'))
-    return render_template('index.html', title='Welcome', loginform=loginform , registerform=registerform)
-
-
+    return render_template('index.html', title='Welcome', registerform = RegisterForm(), loginform = LoginForm() )
 # content stream page
-@app.route('/stream/<username>', methods=['GET', 'POST'])
+@app.route('/stream/<username>', methods=['GET','POST'])
 def stream(username):
     form = PostForm()
     user = query_db('SELECT * FROM Users WHERE username="{}";'.format(username), one=True)
