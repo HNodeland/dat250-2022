@@ -47,16 +47,18 @@ def query_db(query, one=False):
 #TEMP TEST QUERY AV HÅKON, IKKE RØR
 def verify_login(username, password):
     try:
+        print(username, file=sys.stderr)
+        print(password, file=sys.stderr)
         sql = "SELECT * FROM Users WHERE username = :username AND password = :password"
         db = get_db()
         cursor = db.execute(sql, {'username': username, 'password': password})
         valid_user = []
+        
         for Users in cursor:
             valid_user.append({
                 "username": username, 
                 "password": password
                 })
-
         if len(valid_user) == 0:
             return (0, False)
         return (valid_user[0], True)
@@ -64,11 +66,17 @@ def verify_login(username, password):
         print(e)
 
 def register_account(username, first_name, last_name, password):
+    print(username, file=sys.stderr)
+    print(first_name, file=sys.stderr)
+    print(last_name, file=sys.stderr)
+    print(password, file=sys.stderr)
+    sql ="""INSERT INTO Users (username, first_name, last_name, password) VALUES (?,?,?,?) """
     try:
-        sql ="INSERT INTO User(username, first_name, last_name, password) VALUES (?,?,?,?)"
-        db = get_db()
-        db.execute(sql, (username, first_name, last_name, password))
-        db.commit()
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute(sql, (username, first_name, last_name, password))
+        conn.commit()
+        
     except Error as e:
         print(e)
 

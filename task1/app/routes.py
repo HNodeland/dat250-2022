@@ -1,6 +1,6 @@
-from flask import render_template, flash, redirect, url_for, request
+from flask import render_template, flash, redirect, url_for, abort
 from app import app, query_db, verify_login, register_account
-from app.forms import LoginForm, RegisterForm, PostForm, FriendsForm, ProfileForm, CommentsForm
+from app.forms import IndexForm, PostForm, FriendsForm, ProfileForm, CommentsForm
 from datetime import datetime
 import os
 import sys
@@ -11,15 +11,15 @@ import sys
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/index', methods=['GET', 'POST'])
 def index():
-    loginform = LoginForm()
-    registerform = RegisterForm()
-    if loginform.is_submitted() and loginform.submit.data:
+    form = IndexForm()
+    if form.login.is_submitted() and form.login.submit.data:
+        print("logging in -- ", file=sys.stderr)
         #Henter ut brukernavn og passord fra formen
-        username = loginform.username.data
+        username = form.login.username.data
         
         #burde kanskje skje noe kryptering rundt denne
-        password = loginform.password.data
-
+        password = form.login.password.data
+        
         #Valid_user returnerer en tuple, der index 1 representerer
         #om valideringen ble godkjent eller ikke
         #valid_user[1] = True => Godkjent
@@ -31,14 +31,15 @@ def index():
             return redirect(url_for('stream', username=username))
         else:
             flash('Sorry, wrong username or password!')
+    elif form.register.is_submitted() and form.register.submit.data:
+        print("registering account -- ", file=sys.stderr)
+        new_username = form.register.username.data
+        first_name = form.register.first_name.data
+        last_name = form.register.last_name.data
 
-    elif registerform.is_submitted() and registerform.submit.data:
-        new_username = registerform.username.data
-        first_name = registerform.first_name.data
-        last_name = registerform.last_name.data
-        password = registerform.password.data
-        confirm_password = registerform.confirm_password
-
+        password = form.register.password.data
+        confirm_password = form.register.confirm_password.data
+       
         if password == confirm_password:
             register_account(new_username, first_name, last_name, password)
         else:
@@ -48,7 +49,7 @@ def index():
          #registerform.last_name.data, registerform.password.data))
 
         return redirect(url_for('index'))
-    return render_template('index.html', title='Welcome', registerform = RegisterForm(), loginform = LoginForm() )
+    return render_template('index.html', title='Welcome', form = form)
 # content stream page
 @app.route('/stream/<username>', methods=['GET','POST'])
 def stream(username):

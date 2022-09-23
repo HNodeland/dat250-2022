@@ -19,8 +19,12 @@ class RegisterForm(FlaskForm):
     last_name = StringField('Last Name', render_kw={'placeholder': 'Last Name'})
     username = StringField('Username', render_kw={'placeholder': 'Username'})
     password = PasswordField('Password', render_kw={'placeholder': 'Password'}, validators=[InputRequired()])
-    confirm_password = PasswordField('Confirm Password', render_kw={'placeholder': 'Confirm Password'})
+    confirm_password = PasswordField('Confirm Password', render_kw={'placeholder': 'Confirm Password'}, validators=[InputRequired()])
     submit = SubmitField('Sign Up')
+
+class IndexForm(FlaskForm):
+    login = FormField(LoginForm)
+    register = FormField(RegisterForm)
 
 class PostForm(FlaskForm):
     content = TextAreaField('New Post', render_kw={'placeholder': 'What are you thinking about?'})

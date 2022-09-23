@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+{% block content %}
+<div>
+    <h2>403, This site is forbidden, you sneaky hacker. Go <a href="{{ url_for('index') }}">back</a> to where you came from.</h2>
+</div>
+{% endblock %}
