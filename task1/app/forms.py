@@ -1,7 +1,7 @@
-from flask_wtf import FlaskForm
+from flask_wtf import FlaskForm, RecaptchaField
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, FormField, TextAreaField, FileField
 from wtforms.fields.html5 import DateField
-from wtforms.validators import InputRequired
+from wtforms.validators import InputRequired, EqualTo, Regexp, Length
 
 # defines all forms in the application, these will be instantiated by the template,
 # and the routes.py will read the values of the fields
@@ -9,17 +9,17 @@ from wtforms.validators import InputRequired
 # TODO: There was some important security feature that wtforms provides, but I don't remember what; implement it
 
 class LoginForm(FlaskForm):
-    username = StringField('Username', render_kw={'placeholder': 'Username'})
-    password = PasswordField('Password', render_kw={'placeholder': 'Password'})
+    username = StringField('Username', render_kw={'placeholder': 'Username'}, validators=[InputRequired()])
+    password = PasswordField('Password', render_kw={'placeholder': 'Password'}, validators=[InputRequired()])
     remember_me = BooleanField('Remember me') # TODO: It would be nice to have this feature implemented, probably by using cookies
     submit = SubmitField('Sign In')
 
 class RegisterForm(FlaskForm):
-    first_name = StringField('First Name', render_kw={'placeholder': 'First Name'})
-    last_name = StringField('Last Name', render_kw={'placeholder': 'Last Name'})
-    username = StringField('Username', render_kw={'placeholder': 'Username'})
-    password = PasswordField('Password', render_kw={'placeholder': 'Password'}, validators=[InputRequired()])
-    confirm_password = PasswordField('Confirm Password', render_kw={'placeholder': 'Confirm Password'}, validators=[InputRequired()])
+    first_name = StringField('First Name', render_kw={'placeholder': 'First Name'}, validators=[InputRequired(), Regexp('^\w+$'), Length(min=2, max=50)])
+    last_name = StringField('Last Name', render_kw={'placeholder': 'Last Name'}, validators=[InputRequired(), Regexp('^\w+$'), Length(min=2, max=50)])
+    username = StringField('Username', render_kw={'placeholder': 'Username'}, validators=[InputRequired(), Regexp('^\w+$'), Length(min=2, max=12)])
+    password = PasswordField('Password', render_kw={'placeholder': 'Password'}, validators=[InputRequired(), Regexp('^\w+$'), Length(min=8, max=30, message="Password must be atleast 8 characters long")])
+    confirm_password = PasswordField('Confirm Password', render_kw={'placeholder': 'Confirm Password'}, validators=[InputRequired(), Regexp('^\w+$'), EqualTo('password'), Length(min=8, max=30, message="Password must be atleast 8 characters long")])
     submit = SubmitField('Sign Up')
 
 class IndexForm(FlaskForm):
