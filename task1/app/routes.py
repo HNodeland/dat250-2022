@@ -31,20 +31,17 @@ def index():
             return redirect(url_for('stream', username=username))
         else:
             flash('Sorry, wrong username or password!')
-    elif form.register.is_submitted() and form.register.submit.data:
+    elif form.register.validate_on_submit():
         print("registering account -- ", file=sys.stderr)
         new_username = form.register.username.data
         first_name = form.register.first_name.data
         last_name = form.register.last_name.data
 
         password = form.register.password.data
-        confirm_password = form.register.confirm_password.data
        
-        if password == confirm_password:
-            register_account(new_username, first_name, last_name, password)
-            flash('Hello ' + new_username + ', your account has succesfully been created!')
-        else:
-            flash('You have different passwords!')
+        register_account(new_username, first_name, last_name, password)
+        flash('Hello ' + new_username + ', your account has succesfully been created!')
+
         
         #query_db('INSERT INTO Users (username, first_name, last_name, password) VALUES("{}", "{}", "{}", "{}");'.format(registerform.username.data, registerform.first_name.data,
          #registerform.last_name.data, registerform.password.data))
