@@ -39,7 +39,6 @@ def index():
         first_name = form.register.first_name.data
         last_name = form.register.last_name.data
 
-
         # creates hash from user input and 
         password = generate_password_hash(form.register.password.data)
         confirm_password = check_password_hash(password, form.register.confirm_password.data) 
