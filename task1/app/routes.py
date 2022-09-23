@@ -13,7 +13,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 @app.route('/index', methods=['GET', 'POST'])
 def index():
     form = IndexForm()
-    if form.login.is_submitted() and form.login.submit.data:
+    if form.login.validate_on_submit():
         print("logging in -- ", file=sys.stderr)
         
         # Bruker user fra databasen til å hente ut hasha passord -> passord-input og hasha passord blir sammenliknet
@@ -62,7 +62,7 @@ def index():
 def stream(username):
     form = PostForm()
     user = query_db('SELECT * FROM Users WHERE username="{}";'.format(username), one=True)
-    if form.is_submitted():
+    if form.validate_on_submit():
         #Checks if an image has been uploaded
         if form.image.data:
             path = os.path.join(app.config['UPLOAD_PATH'], form.image.data.filename)

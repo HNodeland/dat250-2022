@@ -1,7 +1,8 @@
-from flask_wtf import FlaskForm, RecaptchaField
+from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, FormField, TextAreaField, FileField
 from wtforms.fields.html5 import DateField
 from wtforms.validators import InputRequired, EqualTo, Regexp, Length
+from flask_wtf.file import FileAllowed
 
 # defines all forms in the application, these will be instantiated by the template,
 # and the routes.py will read the values of the fields
@@ -9,8 +10,8 @@ from wtforms.validators import InputRequired, EqualTo, Regexp, Length
 # TODO: There was some important security feature that wtforms provides, but I don't remember what; implement it
 
 class LoginForm(FlaskForm):
-    username = StringField('Username', render_kw={'placeholder': 'Username'}, validators=[InputRequired()])
-    password = PasswordField('Password', render_kw={'placeholder': 'Password'}, validators=[InputRequired()])
+    username = StringField('Username', render_kw={'placeholder': 'Username'}, validators=[InputRequired(), Regexp('^\w+$'), Length(min=2, max=50)])
+    password = PasswordField('Password', render_kw={'placeholder': 'Password'}, validators=[InputRequired(), Regexp('^\w+$'), Length(min=2, max=50)])
     remember_me = BooleanField('Remember me') # TODO: It would be nice to have this feature implemented, probably by using cookies
     submit = SubmitField('Sign In')
 
@@ -28,7 +29,7 @@ class IndexForm(FlaskForm):
 
 class PostForm(FlaskForm):
     content = TextAreaField('New Post', render_kw={'placeholder': 'What are you thinking about?'})
-    image = FileField('Image')
+    image = FileField('Image', validators=[FileAllowed(['jpg','png'], 'Images only!')])
     submit = SubmitField('Post')
 
 class CommentsForm(FlaskForm):
