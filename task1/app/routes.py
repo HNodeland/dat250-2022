@@ -1,5 +1,5 @@
 from flask import render_template, flash, redirect, url_for, abort
-from app import app, query_db, verify_login, register_account
+from app import app, query_db, verify_login, register_account, create_post, create_comment
 from app.forms import IndexForm, PostForm, FriendsForm, ProfileForm, CommentsForm
 from datetime import datetime
 import os
@@ -26,19 +26,25 @@ def index():
         #valid_user[1] = False => Ikke godkjent
         #For å hente ut et dictionary med brukernavn og passord:
         #valid_user[0] => {'username': 'test', 'password': 'test'}
+       
         valid_user = verify_login(username, password)
         if valid_user[1] == 1:
             return redirect(url_for('stream', username=username))
         else:
             flash('Sorry, wrong username or password!')
+<<<<<<< HEAD
     elif form.register.validate_on_submit():
+=======
+    
+    elif form.register.is_submitted() and form.register.submit.data:
+>>>>>>> 5e07d04774001c6e78218bd48495841b79b551ad
         print("registering account -- ", file=sys.stderr)
         new_username = form.register.username.data
         first_name = form.register.first_name.data
         last_name = form.register.last_name.data
-
         password = form.register.password.data
        
+<<<<<<< HEAD
         register_account(new_username, first_name, last_name, password)
         flash('Hello ' + new_username + ', your account has succesfully been created!')
 
@@ -46,20 +52,37 @@ def index():
         #query_db('INSERT INTO Users (username, first_name, last_name, password) VALUES("{}", "{}", "{}", "{}");'.format(registerform.username.data, registerform.first_name.data,
          #registerform.last_name.data, registerform.password.data))
 
+=======
+        if password == confirm_password:
+            
+            register_account(new_username, first_name, last_name, password)
+            flash('Hello ' + new_username + ', your account has succesfully been created!')
+        else:
+            flash('You have different passwords!')
+>>>>>>> 5e07d04774001c6e78218bd48495841b79b551ad
         return redirect(url_for('index'))
     return render_template('index.html', title='Welcome', form = form)
+
 # content stream page
 @app.route('/stream/<username>', methods=['GET','POST'])
 def stream(username):
     form = PostForm()
     user = query_db('SELECT * FROM Users WHERE username="{}";'.format(username), one=True)
     if form.is_submitted():
+        #Checks if an image has been uploaded
         if form.image.data:
             path = os.path.join(app.config['UPLOAD_PATH'], form.image.data.filename)
             form.image.data.save(path)
+  
+        #Create post variables
+        user_id = user['id']
+        content = form.content.data
+        image = form.image.data.filename
+        time = datetime.now()
 
-
-        query_db('INSERT INTO Posts (u_id, content, image, creation_time) VALUES({}, "{}", "{}", \'{}\');'.format(user['id'], form.content.data, form.image.data.filename, datetime.now()))
+        #Send variables to the database
+        create_post(user_id, content, image, time)
+        
         return redirect(url_for('stream', username=username))
 
     posts = query_db('SELECT p.*, u.*, (SELECT COUNT(*) FROM Comments WHERE p_id=p.id) AS cc FROM Posts AS p JOIN Users AS u ON u.id=p.u_id WHERE p.u_id IN (SELECT u_id FROM Friends WHERE f_id={0}) OR p.u_id IN (SELECT f_id FROM Friends WHERE u_id={0}) OR p.u_id={0} ORDER BY p.creation_time DESC;'.format(user['id']))
@@ -70,9 +93,14 @@ def stream(username):
 def comments(username, p_id):
     form = CommentsForm()
     if form.is_submitted():
-        user = query_db('SELECT * FROM Users WHERE username="{}";'.format(username), one=True)
-        query_db('INSERT INTO Comments (p_id, u_id, comment, creation_time) VALUES({}, {}, "{}", \'{}\');'.format(p_id, user['id'], form.comment.data, datetime.now()))
+        #Get variables
+        user = query_db('SELECT id FROM Users WHERE username="{}";'.format(username), one=True)
+        comment = form.comment.data
+        time = datetime.now()
+        #Send variables to the databse
+        create_comment(p_id, user['id'], comment, time)
 
+       
     post = query_db('SELECT * FROM Posts WHERE id={};'.format(p_id), one=True)
     all_comments = query_db('SELECT DISTINCT * FROM Comments AS c JOIN Users AS u ON c.u_id=u.id WHERE c.p_id={} ORDER BY c.creation_time DESC;'.format(p_id))
     try:
