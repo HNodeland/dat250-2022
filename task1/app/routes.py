@@ -1,6 +1,6 @@
 from flask import render_template, flash, redirect, url_for, abort
 from app import app, query_db, verify_login
-from app.forms import LoginForm, RegisterForm, PostForm, FriendsForm, ProfileForm, CommentsForm
+from app.forms import IndexForm, PostForm, FriendsForm, ProfileForm, CommentsForm
 from datetime import datetime
 import os
 import sys
@@ -11,14 +11,13 @@ import sys
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/index', methods=['GET', 'POST'])
 def index():
-    loginform = LoginForm()
-    registerform = RegisterForm()
-    if loginform.is_submitted() and loginform.submit.data:
+    form = IndexForm()
+    if form.login.is_submitted() and form.login.submit.data:
         #Henter ut brukernavn og passord fra formen
-        username = loginform.username.data
+        username = form.login.username.data
         
         #burde kanskje skje noe kryptering rundt denne
-        password = loginform.password.data
+        password = form.login.password.data
         
         #Valid_user returnerer en tuple, der index 1 representerer
         #om valideringen ble godkjent eller ikke
@@ -32,11 +31,11 @@ def index():
         else:
             flash('Sorry, wrong username or password!')
 
-    if registerform.validate_on_submit():
-        query_db('INSERT INTO Users (username, first_name, last_name, password) VALUES("{}", "{}", "{}", "{}");'.format(registerform.username.data, registerform.first_name.data,
-         registerform.last_name.data, registerform.password.data))
+    elif form.register.validate_on_submit():
+        query_db('INSERT INTO Users (username, first_name, last_name, password) VALUES("{}", "{}", "{}", "{}");'.format(form.register.username.data, form.register.first_name.data,
+         form.register.last_name.data, form.register.password.data))
         return redirect(url_for('index'))
-    return render_template('index.html', title='Welcome', loginform=loginform , registerform=registerform)
+    return render_template('index.html', title='Welcome', form=form)
 
 
 # content stream page

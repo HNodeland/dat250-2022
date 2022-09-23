@@ -22,6 +22,10 @@ class RegisterForm(FlaskForm):
     confirm_password = PasswordField('Confirm Password', render_kw={'placeholder': 'Confirm Password'})
     submit = SubmitField('Sign Up')
 
+class IndexForm(FlaskForm):
+    login = FormField(LoginForm)
+    register = FormField(RegisterForm)
+
 class PostForm(FlaskForm):
     content = TextAreaField('New Post', render_kw={'placeholder': 'What are you thinking about?'})
     image = FileField('Image')
