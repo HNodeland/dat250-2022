@@ -1,3 +1,2 @@
 database.db
-app/__pycache__
-__pycache__
+*.pyc
