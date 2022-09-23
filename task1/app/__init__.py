@@ -7,6 +7,7 @@ import sqlite3
 import os
 from sqlite3 import Error
 import sys
+from werkzeug.security import generate_password_hash
 
 #this is a test comment for discord bot
 # create and configure app
@@ -44,7 +45,7 @@ def query_db(query, one=False):
 
 # TODO: Add more specific queries to simplify code
 
-#TEMP TEST QUERY AV HÅKON, IKKE RØR
+#LOGIN QUERY / VERIFICATION
 def verify_login(username, password):
     try:
         print(username, file=sys.stderr)
@@ -57,15 +58,17 @@ def verify_login(username, password):
         for Users in cursor:
             valid_user.append({
                 "username": username, 
-                "password": password
-                })
+                "password": password})
+       
         if len(valid_user) == 0:
             return (0, False)
         return (valid_user[0], True)
     except Error as e:
         print(e)
 
+#REGISTER ACCOUNT QUERY
 def register_account(username, first_name, last_name, password):
+    #PRINTS VARIABLES TO TERMINAL
     print(username, file=sys.stderr)
     print(first_name, file=sys.stderr)
     print(last_name, file=sys.stderr)
@@ -76,7 +79,36 @@ def register_account(username, first_name, last_name, password):
         cur = conn.cursor()
         cur.execute(sql, (username, first_name, last_name, password))
         conn.commit()
-        
+    except Error as e:
+        print(e)
+
+#CREATE POST QUERY
+def create_post(user_id, content, image, time):
+    sql = """INSERT INTO Posts (u_id, content, image, creation_time) VALUES(?,?,?,?)"""
+    print(user_id, file=sys.stderr)
+    print(content, file=sys.stderr)
+    print(image, file=sys.stderr)
+    print(time, file=sys.stderr)
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute(sql, (user_id, content, image, time))
+        conn.commit()
+    except Error as e:
+        print(e)
+
+#CREATE COMMENT QUERY
+def create_comment(p_id, user_id, comment, time):
+    print(p_id, file=sys.stderr)
+    print(user_id, file=sys.stderr)
+    print(comment, file=sys.stderr)
+    print(time, file=sys.stderr)
+    sql = """INSERT INTO Comments (p_id, u_id, comment, creation_time) VALUES (?,?,?,?)"""
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute(sql, (p_id, user_id, comment, time))
+        conn.commit()
     except Error as e:
         print(e)
 
