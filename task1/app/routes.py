@@ -4,6 +4,7 @@ from app.forms import IndexForm, PostForm, FriendsForm, ProfileForm, CommentsFor
 from datetime import datetime
 import os
 import sys
+from werkzeug.security import generate_password_hash, check_password_hash
 
 # this file contains all the different routes, and the logic for communicating with the database
 
@@ -14,33 +15,36 @@ def index():
     form = IndexForm()
     if form.login.is_submitted() and form.login.submit.data:
         print("logging in -- ", file=sys.stderr)
-        #Henter ut brukernavn og passord fra formen
+        
+        # Bruker user fra databasen til å hente ut hasha passord -> passord-input og hasha passord blir sammenliknet
+        user = query_db('SELECT * FROM Users WHERE username="{}";'.format(form.login.username.data), one=True)
+        verifyPassword = check_password_hash(user['password'], form.login.password.data)
+
         username = form.login.username.data
-        
-        #burde kanskje skje noe kryptering rundt denne
-        password = form.login.password.data
-        
         #Valid_user returnerer en tuple, der index 1 representerer
         #om valideringen ble godkjent eller ikke
         #valid_user[1] = True => Godkjent
         #valid_user[1] = False => Ikke godkjent
         #For å hente ut et dictionary med brukernavn og passord:
         #valid_user[0] => {'username': 'test', 'password': 'test'}
-        valid_user = verify_login(username, password)
-        if valid_user[1] == 1:
+        valid_user = verify_login(username)
+        if valid_user[1] == 1 and verifyPassword:
             return redirect(url_for('stream', username=username))
         else:
             flash('Sorry, wrong username or password!')
+    
     elif form.register.is_submitted() and form.register.submit.data:
         print("registering account -- ", file=sys.stderr)
         new_username = form.register.username.data
         first_name = form.register.first_name.data
         last_name = form.register.last_name.data
 
-        password = form.register.password.data
-        confirm_password = form.register.confirm_password.data
+        # creates hash from user input and 
+        password = generate_password_hash(form.register.password.data)
+        confirm_password = check_password_hash(password, form.register.confirm_password.data) 
        
-        if password == confirm_password:
+        # confirm_password returns True if the two passwords match
+        if confirm_password == True:
             register_account(new_username, first_name, last_name, password)
             flash('Hello ' + new_username + ', your account has succesfully been created!')
         else:

@@ -7,6 +7,7 @@ import sqlite3
 import os
 from sqlite3 import Error
 import sys
+from werkzeug.security import generate_password_hash, check_password_hash
 
 #this is a test comment for discord bot
 # create and configure app
@@ -45,20 +46,19 @@ def query_db(query, one=False):
 # TODO: Add more specific queries to simplify code
 
 #TEMP TEST QUERY AV HÅKON, IKKE RØR
-def verify_login(username, password):
+def verify_login(username):
     try:
         print(username, file=sys.stderr)
-        print(password, file=sys.stderr)
-        sql = "SELECT * FROM Users WHERE username = :username AND password = :password"
+        sql = "SELECT * FROM Users WHERE username = :username"
         db = get_db()
-        cursor = db.execute(sql, {'username': username, 'password': password})
+        cursor = db.execute(sql, {'username': username})
+
         valid_user = []
-        
         for Users in cursor:
             valid_user.append({
-                "username": username, 
-                "password": password
+                "username": username
                 })
+
         if len(valid_user) == 0:
             return (0, False)
         return (valid_user[0], True)
