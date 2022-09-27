@@ -16,7 +16,7 @@
                 </div>
                 <div class="card-body">
                     <h5 class="card-title">Access an existing profile</h5>
-                    <form action="" method="POST">
+                    <form action="/index" method="POST">
                         {{ form.login.csrf_token }}
                         {{ wtf.form_field(form.login.username) }}
                         {{ wtf.form_field(form.login.password) }}
@@ -33,7 +33,7 @@
                 </div>
                 <div class="card-body">
                     <h5 class="card-title">Create a new profile</h5>
-                    <form action="{{ url_for('index') }}", method="POST">
+                    <form action="/index", method="POST">
                         {{ form.register.csrf_token }}
                         {{ wtf.form_field(form.register.first_name) }}
                         {{ wtf.form_field(form.register.last_name) }}
