@@ -21,6 +21,7 @@
                         {{ wtf.form_field(form.login.username) }}
                         {{ wtf.form_field(form.login.password) }}
                         {{ wtf.form_field(form.login.remember_me) }}
+                        {{ recaptcha }}
                         {{ wtf.form_field(form.login.submit, class="btn btn-primary") }}
                     </form>
                 </div>
@@ -35,12 +36,12 @@
                     <h5 class="card-title">Create a new profile</h5>
                     <form action="/index", method="POST">
                         {{ form.register.csrf_token }}
-                        {{ recaptcha }}
                         {{ wtf.form_field(form.register.first_name) }}
                         {{ wtf.form_field(form.register.last_name) }}
                         {{ wtf.form_field(form.register.username) }}
                         {{ wtf.form_field(form.register.password) }}
                         {{ wtf.form_field(form.register.confirm_password) }}
+                        {{ recaptcha }}
                         {{ wtf.form_field(form.register.submit, class="btn btn-primary") }}
                     </form>
                 </div>
