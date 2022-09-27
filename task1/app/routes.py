@@ -1,5 +1,6 @@
+from email import message
 from flask import render_template, flash, redirect, url_for, abort
-from app import app, query_db, verify_login, register_account, create_post, create_comment
+from app import app, query_db, verify_login, register_account, create_post, create_comment, recaptcha
 from app.forms import IndexForm, PostForm, FriendsForm, ProfileForm, CommentsForm
 from datetime import datetime
 import os
@@ -13,6 +14,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 @app.route('/index', methods=['GET', 'POST'])
 def index():
     form = IndexForm()
+
     if form.login.validate_on_submit():
         print("logging in -- ", file=sys.stderr)
         
@@ -44,13 +46,15 @@ def index():
         confirm_password = check_password_hash(password, form.register.confirm_password.data) 
        
         # confirm_password returns True if the two passwords match
-        if confirm_password == True:
+        if confirm_password == True and recaptcha.verify():
             register_account(new_username, first_name, last_name, password)
             flash('Hello ' + new_username + ', your account has succesfully been created!')
+        elif recaptcha.verify() == False:
+            flash('Please fill out the reCAPTCHA form!')
         else:
             flash('You have different passwords!')
 
-        
+    
         #query_db('INSERT INTO Users (username, first_name, last_name, password) VALUES("{}", "{}", "{}", "{}");'.format(registerform.username.data, registerform.first_name.data,
          #registerform.last_name.data, registerform.password.data))
 

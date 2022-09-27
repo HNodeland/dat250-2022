@@ -7,12 +7,18 @@ import sqlite3
 import os
 from sqlite3 import Error
 import sys
+from flask_recaptcha import ReCaptcha
 
 #this is a test comment for discord bot
 # create and configure app
 app = Flask(__name__)
 Bootstrap(app)
 app.config.from_object(Config)
+
+#reCaptcha
+app.config['RECAPTCHA_SITE_KEY'] = '6Ld3NyMiAAAAAHn96H2Hg29op5NhFTi7PbbIEMfa'
+app.config['RECAPTCHA_SECRET_KEY'] = '6Ld3NyMiAAAAAJ4dToAvbo-nlJHcrmjo1jSppxCB'
+recaptcha = ReCaptcha(app)
 
 # TODO: Handle login management better, maybe with flask_login?
 #login = LoginManager(app)
