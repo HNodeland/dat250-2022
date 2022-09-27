@@ -1,5 +1,6 @@
+from email import message
 from flask import render_template, flash, redirect, url_for, abort
-from app import app, query_db, verify_login, register_account, create_post, create_comment
+from app import app, query_db, verify_login, register_account, create_post, create_comment, get_user, add_friend, update_user, recaptcha
 from app.forms import IndexForm, PostForm, FriendsForm, ProfileForm, CommentsForm
 from datetime import datetime
 import os
@@ -13,20 +14,18 @@ from werkzeug.security import generate_password_hash, check_password_hash
 @app.route('/index', methods=['GET', 'POST'])
 def index():
     form = IndexForm()
+
     if form.login.validate_on_submit():
         print("logging in -- ", file=sys.stderr)
-        
         # Bruker user fra databasen til å hente ut hasha passord -> passord-input og hasha passord blir sammenliknet
-        user = query_db('SELECT * FROM Users WHERE username="{}";'.format(form.login.username.data), one=True)
-        verifyPassword = check_password_hash(user['password'], form.login.password.data)
-
         username = form.login.username.data
-        #Valid_user returnerer en tuple, der index 1 representerer
-        #om valideringen ble godkjent eller ikke
-        #valid_user[1] = True => Godkjent
-        #valid_user[1] = False => Ikke godkjent
-        #For å hente ut et dictionary med brukernavn og passord:
-        #valid_user[0] => {'username': 'test', 'password': 'test'}
+        #Sjekker om brukernavnet gikk i inputten er i databasen
+        if get_user(username) != False:
+            #trust me, det funker
+            user = get_user(username)
+            if user == False:
+                abort(404)
+            verifyPassword = check_password_hash(user['password'], form.login.password.data)
         valid_user = verify_login(username)
         if valid_user[1] == 1 and verifyPassword:
             return redirect(url_for('stream', username=username))
@@ -44,16 +43,13 @@ def index():
         confirm_password = check_password_hash(password, form.register.confirm_password.data) 
        
         # confirm_password returns True if the two passwords match
-        if confirm_password == True:
+        if confirm_password == True and recaptcha.verify():
             register_account(new_username, first_name, last_name, password)
             flash('Hello ' + new_username + ', your account has succesfully been created!')
+        elif recaptcha.verify() == False:
+            flash('Please fill out the reCAPTCHA form!')
         else:
             flash('You have different passwords!')
-
-        
-        #query_db('INSERT INTO Users (username, first_name, last_name, password) VALUES("{}", "{}", "{}", "{}");'.format(registerform.username.data, registerform.first_name.data,
-         #registerform.last_name.data, registerform.password.data))
-
         return redirect(url_for('index'))
     return render_template('index.html', title='Welcome', form = form)
 
@@ -61,24 +57,23 @@ def index():
 @app.route('/stream/<username>', methods=['GET','POST'])
 def stream(username):
     form = PostForm()
-    user = query_db('SELECT * FROM Users WHERE username="{}";'.format(username), one=True)
+    user = get_user(username)
+    #If the username given in the URL doesn't expict, abort with 404
+    if user == False:
+            abort(404)
     if form.validate_on_submit():
         #Checks if an image has been uploaded
         if form.image.data:
             path = os.path.join(app.config['UPLOAD_PATH'], form.image.data.filename)
             form.image.data.save(path)
-  
         #Create post variables
         user_id = user['id']
         content = form.content.data
         image = form.image.data.filename
         time = datetime.now()
-
         #Send variables to the database
         create_post(user_id, content, image, time)
-        
         return redirect(url_for('stream', username=username))
-
     posts = query_db('SELECT p.*, u.*, (SELECT COUNT(*) FROM Comments WHERE p_id=p.id) AS cc FROM Posts AS p JOIN Users AS u ON u.id=p.u_id WHERE p.u_id IN (SELECT u_id FROM Friends WHERE f_id={0}) OR p.u_id IN (SELECT f_id FROM Friends WHERE u_id={0}) OR p.u_id={0} ORDER BY p.creation_time DESC;'.format(user['id']))
     return render_template('stream.html', title='Stream', username=username, form=form, posts=posts)
 
@@ -87,14 +82,15 @@ def stream(username):
 def comments(username, p_id):
     form = CommentsForm()
     if form.is_submitted():
+        #Get the user from the database based on the URL
+        user = get_user(username)
+        if user == False:
+            abort(404)
         #Get variables
-        user = query_db('SELECT id FROM Users WHERE username="{}";'.format(username), one=True)
         comment = form.comment.data
         time = datetime.now()
         #Send variables to the databse
         create_comment(p_id, user['id'], comment, time)
-
-       
     post = query_db('SELECT * FROM Posts WHERE id={};'.format(p_id), one=True)
     all_comments = query_db('SELECT DISTINCT * FROM Comments AS c JOIN Users AS u ON c.u_id=u.id WHERE c.p_id={} ORDER BY c.creation_time DESC;'.format(p_id))
     try:
@@ -106,14 +102,19 @@ def comments(username, p_id):
 @app.route('/friends/<username>', methods=['GET', 'POST'])
 def friends(username):
     form = FriendsForm()
-    user = query_db('SELECT * FROM Users WHERE username="{}";'.format(username), one=True)
+    #Gets the user from the database based on the username given in the URL
+    user = get_user(username)
+    #If we change the URL to something illegal/a username that isn't doens't exists, go to error page
+    if user == False:
+        abort(404)
     if form.is_submitted():
-        friend = query_db('SELECT * FROM Users WHERE username="{}";'.format(form.username.data), one=True)
-        if friend is None:
+        #Searches the database for the given username, returns it to the friend variable
+        friend = get_user(form.username.data)
+        #get_user returns False if it cant find the given username
+        if friend == False:
             flash('User does not exist')
         else:
-            query_db('INSERT INTO Friends (u_id, f_id) VALUES({}, {});'.format(user['id'], friend['id']))
-    
+            add_friend(user['id'], friend['id'])
     all_friends = query_db('SELECT * FROM Friends AS f JOIN Users as u ON f.f_id=u.id WHERE f.u_id={} AND f.f_id!={} ;'.format(user['id'], user['id']))
     try:
         return render_template('friends.html', title='Friends', username=username, friends=all_friends, form=form)
@@ -125,12 +126,19 @@ def friends(username):
 def profile(username):
     form = ProfileForm()
     if form.is_submitted():
-        query_db('UPDATE Users SET education="{}", employment="{}", music="{}", movie="{}", nationality="{}", birthday=\'{}\' WHERE username="{}" ;'.format(
-            form.education.data, form.employment.data, form.music.data, form.movie.data, form.nationality.data, form.birthday.data, username
-        ))
+        #Get all variabnles
+        education = form.education.data
+        employment = form.employment.data
+        music = form.music.data
+        movie = form.movie.data
+        nationality = form.nationality.data
+        birthday = form.birthday.data
+        #Send variables to the database
+        update_user(education, employment, music, movie, nationality, birthday, username)
         return redirect(url_for('profile', username=username))
-    
-    user = query_db('SELECT * FROM Users WHERE username="{}";'.format(username), one=True)
+    user = get_user(username)
+    if user == False:
+        abort(404)
     try:
         return render_template('profile.html', title='profile', username=username, user=user, form=form)
     except:
