@@ -48,9 +48,7 @@ def query_db(query, one=False):
     db.commit()
     return (rv[0] if rv else None) if one else rv
 
-# TODO: Add more specific queries to simplify code
-
-#TEMP TEST QUERY AV HÅKON, IKKE RØR
+#GET USERNAME QUERY FOR LOGGING IN
 def verify_login(username):
     try:
         print(username, file=sys.stderr)
@@ -58,15 +56,44 @@ def verify_login(username):
         db = get_db()
         cursor = db.execute(sql, {'username': username})
 
+        #add all users found in the databse to a list
         valid_user = []
         for Users in cursor:
             valid_user.append({
                 "username": username
                 })
 
+        #if the list of user is empty, return false, else return the user and true
         if len(valid_user) == 0:
             return (0, False)
         return (valid_user[0], True)
+    except Error as e:
+        print(e)
+    
+def get_user(username):
+    try:
+        print(username, file=sys.stderr)
+        sql = "SELECT * FROM Users WHERE username = :username"
+        db = get_db()
+        cursor = db.execute(sql, {'username': username})
+        user = cursor.fetchone()
+
+        #if a user is found, return the user, else return false
+        if user != None:
+            return user
+        else:
+            return False    
+    except Error as e:
+        print(e)
+
+#ADD A FRIEND QUERY
+def add_friend(user_id, friend_id):
+    try:
+        sql = "INSERT INTO Friends (u_id, f_id) VALUES (?,?)"
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute(sql, (user_id, friend_id))
+        conn.commit()
     except Error as e:
         print(e)
 
@@ -116,6 +143,16 @@ def create_comment(p_id, user_id, comment, time):
     except Error as e:
         print(e)
 
+#UPDATE USER QUERY
+def update_user(education, employment, music, movie, nationality, birthday, username):
+    try:
+        sql = "UPDATE Users SET education = :education , employment = :employment,  music = :music, movie = :movie, nationality = :nationality, birthday = :birthday WHERE username= :username"
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute(sql, {'education': education, 'employment': employment, 'music': music, 'movie': movie, 'nationality': nationality, 'birthday': birthday, 'username': username})
+        conn.commit()
+    except Error as e:
+        print(e)
 # automatically called when application is closed, and closes db connection
 @app.teardown_appcontext
 def close_connection(exception):
