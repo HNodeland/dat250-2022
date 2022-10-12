@@ -77,7 +77,7 @@ def get_user(username):
         db = get_db()
         cursor = db.execute(sql, {'username': username})
         user = cursor.fetchone()
-
+        
         #if a user is found, return the user, else return false
         if user != None:
             return user

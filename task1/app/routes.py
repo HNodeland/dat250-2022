@@ -1,4 +1,3 @@
-from email import message
 from flask import render_template, flash, redirect, url_for, abort
 from app import app, query_db, verify_login, register_account, create_post, create_comment, get_user, add_friend, update_user, recaptcha
 from app.forms import IndexForm, PostForm, FriendsForm, ProfileForm, CommentsForm
